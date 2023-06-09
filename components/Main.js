@@ -1,4 +1,5 @@
 
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 
 import React, { useEffect, useState } from 'react';
 import {
@@ -15,23 +16,24 @@ import {
 import * as Permissions from 'expo-permissions';
 import * as FileSystem from 'expo-file-system';
 
-  
 
 
 
-const Main = () => {
+
+const Main = ({ navigation }) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [modalVisible2, setModalVisible2] = useState(false);
     const [folderName, setFolderName] = useState('');
     const [fileName, setFileName] = useState('');
     const [currentPath, setCurrentPath] = useState(FileSystem.documentDirectory);
     const [folders, setFolders] = useState([]);
+     
 
+    
     const requestStoragePermission = async () => {
         try {
             const { status } = await Permissions.askAsync(Permissions.READ_EXTERNAL_STORAGE);
-            // const permissions = await FileSystem.requestPermissionsAsync();
-            // const permissions = await SAF.requestPermissionsAsync();
+
 
             if (status === 'granted') {
                 console.log('You can use the storage');
@@ -51,7 +53,9 @@ const Main = () => {
     const getAllFolders = async (path) => {
         try {
             const result = await FileSystem.readDirectoryAsync(path);
-            console.log('GOT RESULT', result);
+            
+
+            console.log('GOT RESULT',result);
             setFolders(result.map((name) => ({ name, path: `${path}/${name}` })));
         } catch (err) {
             console.log(err.message, err.code);
@@ -75,8 +79,9 @@ const Main = () => {
 
     const createFile = async () => {
         try {
+            
             await FileSystem.writeAsStringAsync(
-                `${currentPath}/${fileName}.txt`,
+                `${currentPath}/${fileName}`,
                 'hello how are you'
             );
             getAllFolders(currentPath);
@@ -84,7 +89,7 @@ const Main = () => {
             console.log(error);
         }
     };
-
+    
     const deleteDir = async (path) => {
         try {
             await FileSystem.deleteAsync(path);
@@ -94,11 +99,24 @@ const Main = () => {
         }
     };
 
- 
+
 
     return (
         <View style={{ flex: 1 }}>
-            <View style={{ width: '100%', flexDirection: 'row', margin: 20, marginTop: 70 }}>
+            <Text
+                onPress={() => navigation.navigate('Folders')}
+                style={{
+                    flexDirection:"row",
+                    backgroundColor: 'honeydew',
+                    width: "20%",
+                    // borderRadius:10
+                      textAlign:'center',
+                      paddingBottom:10
+                }}>
+                 <MaterialCommunityIcons name="folder" color={'black'} size={26} /> 
+                 <Text>Go</Text>
+            </Text>
+            <View style={{ width: '100%', flexDirection: 'row', margin: 20 }}>
                 {currentPath === FileSystem.documentDirectory ? null : (
                     <Text
                         style={{ fontWeight: '700' }}
@@ -110,54 +128,58 @@ const Main = () => {
                         Back
                     </Text>
                 )}
-                 
+
                 <Text style={{ marginLeft: 20 }}>{currentPath}</Text>
             </View>
-            <View style={{ marginTop: 50 }}>
-                <ScrollView>
-                    <FlatList
-                        data={folders}
-                        numColumns={2}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                style={{
-                                    width: '50%',
+            <View style={{}}>
+
+                <FlatList
+                    style={{ marginBottom: 100 }}
+                    data={folders}
+                    numColumns={2}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            style={{
+                                width: '50%',
+
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                height: 100,
+                            }}
+                            onPress={() => {
+                                if (!isFolder(item.name)) {
+                                    setCurrentPath(item.path);
+                                    getAllFolders(item.path);
                                     
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    height: 100,
-                                }}
-                                onPress={() => {
-                                    if (!isFolder(item.name)) {
-                                        setCurrentPath(item.path);
-                                        getAllFolders(item.path);
-                                    }
-                                }}
-                                onLongPress={() => {
-                                    deleteDir(item.path);
-                                }}
-                            >
-                                {isFolder(item.name) ? (
-                                    <Image
-                                        source={require("../images/file.png")}
-                                        style={{ width: 50, height: 50 }}
-                                    />
-                                ) : (
-                                    <Image
-                                        source={require("../images/open-folder.png")}
-                                        style={{ width: 50, height: 50 }}
-                                    />
-                                )}
-                                <Text>
-                                    {item.name.length > 20 ? `${item.name.substring(0, 10)}...` : item.name}
-                                </Text>
-                            </TouchableOpacity>
-                        )}
-                        keyExtractor={(item) => item.path}
-                    />
-                </ScrollView>
+                                }
+                                
+                            }}
+                            onLongPress={() => {
+                                deleteDir(item.path);
+                            }}
+                        >
+                            {isFolder(item.name) ? (
+                                <Image
+
+                                    source={require("../images/file.png")}
+                                    style={{ width: 50, height: 50 }}
+                                />
+                            ) : (
+                                <Image
+                                    source={require("../images/open-folder.png")}
+                                    style={{ width: 50, height: 50 }}
+                                />
+                            )}
+                            <Text>
+                                {item.name.length > 20 ? `${item.name.substring(0, 10)}...` : item.name}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                    keyExtractor={(item) => item.path}
+                />
+
             </View>
-            
+
             <TouchableOpacity
                 style={{
                     position: 'absolute',
@@ -274,7 +296,7 @@ const Main = () => {
                                 setModalVisible(false);
                                 createFolder();
                                 setFolderName('');
-                                
+
                             }}
                         >
                             <Text style={{ color: '#fff', fontSize: 18 }}>Create Folder</Text>
